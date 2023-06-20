@@ -1,0 +1,174 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SchedulerGUI extends JFrame {
+    private JTextField taskTextField;
+    private JTextField timeTextField;
+    private JSpinner hourSpinner;
+    private JSpinner minuteSpinner;
+    private DefaultListModel<Task> taskListModel;
+    private JList<Task> taskList;
+
+    public SchedulerGUI() {
+        super("Scheduler");
+
+        // Set up the main frame
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setPreferredSize(new Dimension(500, 400));
+        setLayout(new BorderLayout());
+
+        // Create the task list model
+        taskListModel = new DefaultListModel<>();
+
+        // Create the task list
+        taskList = new JList<>(taskListModel);
+        add(new JScrollPane(taskList), BorderLayout.CENTER);
+
+        // Create the panel for adding new tasks
+        JPanel inputPanel = new JPanel(new BorderLayout());
+
+        // Create the panel for task description, time, priority, and due time
+        JPanel taskInputPanel = new JPanel(new GridLayout(4, 2));
+
+        // Create the text field for entering tasks
+        taskTextField = new JTextField();
+        taskInputPanel.add(new JLabel("Task:"));
+        taskInputPanel.add(taskTextField);
+
+        // Create the text field for entering time
+        timeTextField = new JTextField();
+        taskInputPanel.add(new JLabel("Time (in minutes):"));
+        taskInputPanel.add(timeTextField);
+
+        // Create the combo box for selecting task priority
+        JComboBox<Priority> priorityComboBox = new JComboBox<>(Priority.values());
+        taskInputPanel.add(new JLabel("Priority:"));
+        taskInputPanel.add(priorityComboBox);
+
+        // Create the spinners for selecting due time
+        hourSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 23, 1));
+        minuteSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 59, 1));
+        JPanel dueTimePanel = new JPanel(new FlowLayout());
+        dueTimePanel.add(new JLabel("Due Time:"));
+        dueTimePanel.add(hourSpinner);
+        dueTimePanel.add(new JLabel("h"));
+        dueTimePanel.add(minuteSpinner);
+        dueTimePanel.add(new JLabel("m"));
+        taskInputPanel.add(dueTimePanel);
+
+        inputPanel.add(taskInputPanel, BorderLayout.NORTH);
+
+        // Create the button for adding tasks
+        JButton addButton = new JButton("Add Task");
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String taskDescription = taskTextField.getText().trim();
+                String timeString = timeTextField.getText().trim();
+                Priority priority = (Priority) priorityComboBox.getSelectedItem();
+                int dueHour = (int) hourSpinner.getValue();
+                int dueMinute = (int) minuteSpinner.getValue();
+
+                if (!taskDescription.isEmpty() && !timeString.isEmpty()) {
+                    int time = Integer.parseInt(timeString);
+                    Task task = new Task(taskDescription, time, priority, dueHour, dueMinute);
+                    taskListModel.addElement(task);
+                    taskTextField.setText("");
+                    timeTextField.setText("");
+                    priorityComboBox.setSelectedIndex(0);
+                    hourSpinner.setValue(0);
+                    minuteSpinner.setValue(0);
+                }
+            }
+        });
+        inputPanel.add(addButton, BorderLayout.SOUTH);
+
+        add(inputPanel, BorderLayout.SOUTH);
+
+        // Create the checkbox for task completion
+        JCheckBox completedCheckBox = new JCheckBox("Completed");
+        completedCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Task selectedTask = taskList.getSelectedValue();
+                if (selectedTask != null) {
+                    selectedTask.setCompleted(completedCheckBox.isSelected());
+                }
+            }
+        });
+        inputPanel.add(completedCheckBox, BorderLayout.CENTER);
+
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new SchedulerGUI().setVisible(true);
+            }
+        });
+    }
+}
+
+class Task {
+    private String description;
+    private int time;
+    private Priority priority;
+    private int dueHour;
+    private int dueMinute;
+    private boolean completed;
+
+    public Task(String description, int time, Priority priority, int dueHour, int dueMinute) {
+        this.description = description;
+        this.time = time;
+        this.priority = priority;
+        this.dueHour = dueHour;
+        this.dueMinute = dueMinute;
+        this.completed = false;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public int getDueHour() {
+        return dueHour;
+    }
+
+    public int getDueMinute() {
+        return dueMinute;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
+    }
+
+    @Override
+    public String toString() {
+        return description + " - Priority: " + priority +
+                " - Due Time: " + String.format("%02d:%02d", dueHour, dueMinute) +
+                (completed ? " (Completed)" : "");
+    }
+}
+
+enum Priority {
+    LOW, MEDIUM, HIGH
+}
